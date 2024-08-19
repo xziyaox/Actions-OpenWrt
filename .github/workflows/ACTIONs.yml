@@ -20,7 +20,7 @@ on:
         default: ax6s.config
       UPLOAD_RELEASE:
         description: UPLOAD_RELEASE
-        required: false
+        required: true
         type: string
         default: false
       DEVICE_NAME:
