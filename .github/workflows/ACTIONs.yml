@@ -4,24 +4,29 @@ on:
   workflow_dispatch:
     inputs:
       REPO_URL:
-        description: Enter the address of the OpenWrt repository
+        description: OpenWrt-repository
         required: true
-        type: string
+        type: choice
         default: https://github.com/openwrt/openwrt.git
+        options:
+        - https://github.com/openwrt/openwrt.git
+        - https://github.com/coolsnowwolf/lede.git
+        - https://github.com/Lienol/openwrt.git
+        - https://github.com/immortalwrt/immortalwrt.git
       REPO_BRANCH:
         description: Enter the branch of the OpenWrt
         required: true
         type: string
         default: main
       CONFIG_FILE:
-        description: Enter your config name
+        description: Enter your config file
         required: true
         type: string
-        default: ax6s.config
+        default: ax6s
       UPLOAD_RELEASE:
         description: UPLOAD_RELEASE
         required: true
-        type: string
+        type: boolean
         default: false
       DEVICE_NAME:
         description: Enter the device name
@@ -31,7 +36,7 @@ on:
 env:
   REPO_URL: ${{ inputs.REPO_URL }}
   REPO_BRANCH: ${{ inputs.REPO_BRANCH }}
-  CONFIG_FILE: config/${{ inputs.CONFIG_FILE }}
+  CONFIG_FILE: config/${{ inputs.CONFIG_FILE }}.config
   FEEDS_CONF: feeds.conf.default
   DIY_P1_SH: .github/FIRST.sh
   DIY_P2_SH: .github/SECOND.sh
