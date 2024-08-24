@@ -26,7 +26,7 @@ on:
       UPLOAD_RELEASE:
         description: UPLOAD_RELEASE
         required: true
-        type: boolean
+        type: string
         default: false
       DEVICE_NAME:
         description: Enter the device name
