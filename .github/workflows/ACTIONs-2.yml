@@ -28,10 +28,6 @@ on:
         required: true
         type: string
         default: false
-      DEVICE_NAME:
-        description: Enter the device name
-        required: false
-        type: string
 
 env:
   REPO_URL: ${{ inputs.REPO_URL }}
