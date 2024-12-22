@@ -1,4 +1,4 @@
-name: OPENWRT
+name: Build-use-latest
 
 on:
   workflow_dispatch:
