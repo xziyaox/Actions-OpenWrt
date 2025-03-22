@@ -7,7 +7,7 @@ on:
         description: 编译分支
         required: true
         type: string
-        default: main
+        default: openwrt-24.10
       CONFIG_FILE:
         description: 配置文件名称
         required: true
