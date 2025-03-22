@@ -1,4 +1,4 @@
-name: OP-24.10
+name: OPENWRT
 
 on:
   workflow_dispatch:
