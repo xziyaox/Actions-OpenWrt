@@ -1,4 +1,4 @@
-name: immortalwrt
+name: IMMORTALWRT
 
 on:
   workflow_dispatch:
