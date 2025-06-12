@@ -35,7 +35,7 @@ env:
   REPO_URL: ${{inputs.URL}}
   REPO_BRANCH: ${{inputs.BRANCH}}
   FEEDS_CONF: feeds.conf.default
-  CONFIG_FILE: config/${{inputs.CFG}}
+  CONFIG_FILE: config/${{inputs.CFG}}.config
   DIY_P1_SH: .github/DIY1.sh
   DIY_P2_SH: .github/DIY2.sh
   UPLOAD_BIN_DIR: true
