@@ -95,6 +95,8 @@ jobs:
         ./scripts/feeds install -a
 
     - name: 加载自定义配置
+      env:
+        CONFIG_FILE: config/${{inputs.CONFIG}}.config
       run: |
         [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
         cd openwrt
