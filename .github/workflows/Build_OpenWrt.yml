@@ -128,6 +128,8 @@ jobs:
       run: df -hT
 
     - name: 上传bin目录
+      env:
+        UPLOAD_BIN_DIR: true
       uses: actions/upload-artifact@main
       if: steps.compile.outputs.status == 'success' && env.UPLOAD_BIN_DIR == 'true'
       with:
@@ -135,6 +137,8 @@ jobs:
         path: openwrt/bin
 
     - name: 整理文件
+      env:
+        UPLOAD_FIRMWARE: true
       id: organize
       if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
       run: |
