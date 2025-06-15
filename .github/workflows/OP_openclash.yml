@@ -11,7 +11,7 @@ on:
         description: 输入配置文件名称
         required: true
         type: string
-        default: ax6s
+        default: openclash
 
 jobs:
   build:
