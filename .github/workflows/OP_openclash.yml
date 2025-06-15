@@ -1,0 +1,169 @@
+name: OpenWrt
+on:
+  workflow_dispatch:
+    inputs:
+      BRANCH:
+        description: 输入编译分支
+        require: true
+        type: string
+        default: main
+      CONFIG:
+        description: 输入配置文件名称
+        require: true
+        type: string
+        default: ax6s
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@main
+
+    - name: 当前空间存储信息查看
+      run: |
+        echo "当前空间存储信息查看"
+        echo "=============================================================================="
+        df -hT
+        echo "=============================================================================="
+
+    - name: 清除系统内置软件
+      uses: hugoalh/disk-space-optimizer-ghaction@main
+      with:
+        operate_sudo: "True"
+        general_include: ".+"
+        general_exclude: |-
+          ^GCC$
+          ^G\+\+$
+          Clang
+          LLVM
+        docker_include: ".+"
+        docker_prune: "True"
+        docker_clean: "True"
+        apt_prune: "True"
+        apt_clean: "True"
+        homebrew_prune: "True"
+        homebrew_clean: "True"
+        npm_prune: "True"
+        npm_clean: "True"
+        os_swap: "True"
+
+    - name: 最大化编译空间
+      uses: easimon/maximize-build-space@master
+      with:
+        root-reserve-mb: 1024
+        swap-size-mb: 4096
+
+    - name: 完成空间清理
+      run: |
+        echo "完成空间清理"
+        echo "=============================================================================="
+        df -hT
+        echo "=============================================================================="
+
+    - name: Checkout
+      uses: actions/checkout@main
+
+    - name: 初始化编译环境
+      env:
+        DEBIAN_FRONTEND: noninteractive
+      run: |
+        sudo apt -y update
+        sudo apt -y full-upgrade
+        sudo apt -y install build-essential clang flex bison g++ gawk \
+        gcc-multilib g++-multilib gettext git libncurses-dev libssl-dev \
+        python3-distutils python3-setuptools rsync swig unzip zlib1g-dev file wget
+        sudo apt -y autoremove --purge
+        sudo apt -y clean
+        sudo timedatectl set-timezone "Asia/Shanghai"
+
+    - name: 克隆源码仓库
+      env:
+        REPO_URL: https://github.com/openwrt/openwrt
+        REPO_BRANCH: ${{inputs.BRANCH}}
+      run: |
+        git clone --depth=1 $REPO_URL -b $REPO_BRANCH openwrt
+        cd openwrt
+        echo 'src-git openclash https://github.com/vernesong/OpenClash.git' >> feeds.conf.default
+        echo 'src-git ramfree https://github.com/xziyaox/ramfree.git' >> feeds.conf.default
+
+    - name: 更新&安装feeds
+      run: |
+        cd openwrt
+        ./scripts/feeds update -a
+        ./scripts/feeds update -a
+        ./scripts/feeds install -a
+        ./scripts/feeds install -a
+
+    - name: 加载自定义配置
+      env:
+        CONFIG_FILE: config/${{inputs.CONFIG}}.config
+      run: |
+        [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
+        cd openwrt
+        sed -i 's/192.168.1.1/192.168.10.1/g' package/base-files/files/bin/config_generate
+        sed -i 's/OpenWrt/AX6S/g' package/base-files/files/bin/config_generate
+
+    - name: 下载编译依赖包
+      run: |
+        cd openwrt
+        make defconfig
+        make download -j4
+        find dl -size -1024c -exec ls -l {} \;
+        find dl -size -1024c -exec rm -f {} \;
+
+    - name: 编译固件
+      id: compile
+      run: |
+        cd openwrt
+        echo -e "$(nproc) thread compile"
+        make -j$(nproc) || make -j1 || make -j1 V=s
+        echo "status=success" >> $GITHUB_OUTPUT
+        grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -r 's/.*DEVICE_(.*)=y/\1/' > DEVICE_NAME
+        [ -s DEVICE_NAME ] && echo "DEVICE_NAME=_$(cat DEVICE_NAME)" >> $GITHUB_ENV
+        echo "FILE_DATE=_$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
+
+    - name: 检查空间使用情况
+      if: (!cancelled())
+      run: df -hT
+
+    - name: 上传bin目录
+      env:
+        UPLOAD_BIN_DIR: true
+      uses: actions/upload-artifact@main
+      if: steps.compile.outputs.status == 'success' && env.UPLOAD_BIN_DIR == 'true'
+      with:
+        name: OpenWrt_bin${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
+        path: openwrt/bin
+
+    - name: 整理文件
+      env:
+        UPLOAD_FIRMWARE: true
+      id: organize
+      if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
+      run: |
+        cd openwrt/bin/targets/*/*
+        rm -rf packages
+        # rm -rf *.buildinfo
+        rm -rf profiles.json
+        rm -rf *.manifest
+        rm -rf *-kernel.bin
+        rm -rf *-rootfs.img
+        rm -rf *-rootfs.img.gz
+        rm -rf sha256sums
+        echo "FIRMWARE=$PWD" >> $GITHUB_ENV
+        echo "status=success" >> $GITHUB_OUTPUT
+
+    - name: 上传固件
+      uses: actions/upload-artifact@main
+      if: steps.organize.outputs.status == 'success' && !cancelled()
+      with:
+        name: OpenWrt_firmware${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
+        path: ${{ env.FIRMWARE }}
+
+    - name: 清理workflow
+      uses: Mattraks/delete-workflow-runs@main
+      with:
+        retain_days: 0
+        keep_minimum_runs: 3
