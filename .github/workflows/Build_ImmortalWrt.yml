@@ -4,12 +4,12 @@ on:
     inputs:
       BRANCH:
         description: 输入编译分支
-        require: true
+        required: true
         type: string
         default: master
       CONFIG:
         description: 输入配置文件名称
-        require: true
+        required: true
         type: string
         default: imm
 
