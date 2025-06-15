@@ -1,15 +1,15 @@
-name: OpenWrt
+name: OP_openclash
 on:
   workflow_dispatch:
     inputs:
       BRANCH:
         description: 输入编译分支
-        require: true
+        required: true
         type: string
         default: main
       CONFIG:
         description: 输入配置文件名称
-        require: true
+        required: true
         type: string
         default: ax6s
 
